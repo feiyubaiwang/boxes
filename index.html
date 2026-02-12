@@ -97,12 +97,11 @@
         /* ------------------ 3D 机械胶片滚轮样式 ------------------ */
         .reel-container {
             position: relative;
-            /* 将容器高度缩小到一半左右 */
-            height: 140px; 
+            height: 180px; 
             width: 100%;
-            max-width: 240px;
+            max-width: 300px;
             margin: 0 auto;
-            perspective: 800px; /* 3D 透视深度 */
+            perspective: 1000px; /* 3D 透视深度 */
             /* 调整遮罩渐变：两端平滑淡出，使露出的一半文字具有没入黑暗的视觉效果 */
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
@@ -115,7 +114,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 100%;
-            height: 32px;
+            height: 40px;
             border-top: 1px solid rgba(214, 214, 245, 0.4);
             border-bottom: 1px solid rgba(214, 214, 245, 0.4);
             background: linear-gradient(90deg, transparent, rgba(214, 214, 245, 0.15), transparent);
@@ -129,12 +128,12 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border: 1px solid var(--theme-color);
             border-radius: 50%;
             background: var(--bg-dark);
-            box-shadow: 0 0 8px var(--theme-color-glow);
+            box-shadow: 0 0 10px var(--theme-color-glow);
         }
         .reel-selector::before { left: 15px; }
         .reel-selector::after { right: 15px; }
@@ -151,11 +150,11 @@
             position: absolute;
             top: 50%;
             left: 0; right: 0;
-            margin-top: -16px; /* 高度一半，用于垂直居中 */
-            height: 32px;
-            line-height: 32px;
+            margin-top: -20px; /* 高度一半，用于垂直居中 */
+            height: 40px;
+            line-height: 40px;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: var(--text-dim);
             /* 提升未选中项的透明度，让它们清晰可见 */
             opacity: 0.45; 
@@ -170,7 +169,7 @@
             opacity: 1;
             color: var(--text-main);
             text-shadow: 0 0 15px var(--theme-color-glow), 0 0 5px var(--text-main);
-            font-size: 1.05rem;
+            font-size: 1.2rem;
             font-weight: 700;
         }
 
@@ -187,9 +186,9 @@
     
     <canvas id="particle-canvas"></canvas>
 
-    <!-- 顶部区：标题与 3D 胶片滚轮 (移除 absolute，改为弹性流式布局以适应更大的滚轮) -->
-    <header class="relative w-full text-center z-20 flex flex-col items-center mt-4">
-        <p class="text-xs md:text-sm tracking-widest font-light" style="color: var(--text-muted);">拨 动 轮 盘 ， 选 择 你 现 在 的 情 绪</p>
+    <!-- 顶部区：标题与 3D 胶片滚轮 -->
+    <header class="relative w-full text-center z-20 flex flex-col items-center mt-6">
+        <p class="text-sm md:text-base tracking-widest font-light" style="color: var(--text-muted);">拨 动 轮 盘 ， 选 择 你 现 在 的 情 绪</p>
         
         <!-- 3D 胶片滚轮容器 -->
         <div class="reel-container mt-6">
@@ -209,11 +208,11 @@
         </div>
     </header>
 
-    <!-- 盲盒主区域 (修改了mt-12 md:mt-16 为 mt-6 md:mt-8，并缩小了 svg 尺寸) -->
-    <main class="relative z-10 flex flex-row items-center justify-center gap-8 md:gap-20 mt-6 md:mt-8 w-full max-w-4xl px-4">
+    <!-- 盲盒主区域 -->
+    <main class="relative z-10 flex flex-row items-center justify-center gap-10 md:gap-24 mt-8 md:mt-12 w-full max-w-4xl px-4">
         <!-- 盲盒 1 -->
         <div class="blind-box-container box-1" onclick="openBox(this)">
-            <svg class="blind-box-svg w-16 h-16 md:w-24 md:h-24" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="blind-box-svg w-24 h-24 md:w-32 md:h-32" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
@@ -221,7 +220,7 @@
         </div>
         <!-- 盲盒 2 -->
         <div class="blind-box-container box-2" onclick="openBox(this)">
-            <svg class="blind-box-svg w-16 h-16 md:w-24 md:h-24" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="blind-box-svg w-24 h-24 md:w-32 md:h-32" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
@@ -229,7 +228,7 @@
         </div>
         <!-- 盲盒 3 -->
         <div class="blind-box-container box-3" onclick="openBox(this)">
-            <svg class="blind-box-svg w-16 h-16 md:w-24 md:h-24" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="blind-box-svg w-24 h-24 md:w-32 md:h-32" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
@@ -237,8 +236,8 @@
         </div>
     </main>
 
-    <footer class="absolute bottom-10 left-0 w-full text-center z-10 pointer-events-none">
-        <p class="text-xs tracking-widest" style="color: var(--text-dim);">点 击 一 个 盲 盒 ， 接 受 宇 宙 的 回 音</p>
+    <footer class="absolute bottom-12 left-0 w-full text-center z-10 pointer-events-none">
+        <p class="text-sm tracking-widest" style="color: var(--text-dim);">点 击 一 个 盲 盒 ， 接 受 宇 宙 的 回 音</p>
     </footer>
 
     <!-- 台词弹窗遮罩层 -->
@@ -564,7 +563,7 @@
         
         const totalItems = items.length;
         const anglePerItem = 360 / totalItems; // 每个选项占的角度
-        const radius = 65; // 虚拟圆柱体半径
+        const radius = 85; // 虚拟圆柱体半径（增大以匹配更大的容器）
 
         let currentReelIndex = 0;
         let currentTheme = items[0].getAttribute('data-theme'); // 动态获取打乱后的第一个主题
