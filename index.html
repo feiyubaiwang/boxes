@@ -85,6 +85,9 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            background-color: rgba(100, 70, 55, 0.85);
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
         }
 
         .quote-modal.active {
@@ -102,6 +105,7 @@
             max-height: 80vh;
             padding: 20px;
             box-sizing: border-box;
+            text-align: center;
         }
 
         .quote-text {
@@ -275,7 +279,7 @@
     </div>
 
     <!-- 台词弹窗遮罩层 -->
-    <div id="quoteModal" class="quote-modal cursor-pointer" style="background-color: rgba(100, 70, 55, 0.85);" onclick="closeBox()">
+    <div id="quoteModal" class="quote-modal cursor-pointer" onclick="closeBox()">
         <div class="quote-text-container">
             <div class="quote-text">
                 <p id="quoteContent" class="text-xl md:text-3xl leading-relaxed md:leading-loose tracking-wider font-light mb-8 text-center" style="color: var(--text-main); font-family: 'Noto Serif SC', serif;"></p>
