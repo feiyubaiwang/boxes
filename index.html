@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>情绪盲盒：电影台词向</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -218,7 +219,8 @@
         }
     </style>
 </head>
-<body style="font-family: 'Noto Serif SC', serif; background: #A77865; background: radial-gradient(circle at center, #C99A87 0%, #A77865 100%); color: #FFFFFF; overflow: hidden; touch-action: none;">
+<!-- 修改 body 增加 py-12 内边距，保护上下边界 -->
+<body class="min-h-screen flex flex-col items-center justify-center relative select-none py-12">
     
     <canvas id="particle-canvas"></canvas>
 
