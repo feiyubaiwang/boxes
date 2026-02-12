@@ -81,7 +81,9 @@
             right: 0;
             bottom: 0;
             z-index: 50;
-            display: table;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .quote-modal.active {
@@ -89,23 +91,32 @@
             pointer-events: auto;
         }
 
+        .quote-text-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
         .quote-text {
-            display: table-cell;
-            vertical-align: middle;
-            text-align: center;
             transform: translateY(20px);
             opacity: 0;
             transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
             transition-delay: 0.3s;
-            width: 90%;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+            width: 100%;
+            text-align: center;
         }
 
         .quote-modal.active .quote-text {
             transform: translateY(0);
             opacity: 1;
+        }
+
+        .close-hint {
+            margin-top: 20px;
         }
 
         /* ------------------ 3D 机械胶片滚轮样式 ------------------ */
@@ -257,11 +268,13 @@
 
     <!-- 台词弹窗遮罩层 -->
     <div id="quoteModal" class="quote-modal cursor-pointer" style="background-color: rgba(100, 70, 55, 0.85);" onclick="closeBox()">
-        <div class="quote-text">
-            <p id="quoteContent" class="text-xl md:text-3xl leading-relaxed md:leading-loose tracking-wider font-light mb-8" style="color: var(--text-main); font-family: 'Noto Serif SC', serif;"></p>
-            <p id="quoteSource" class="text-sm md:text-base tracking-widest text-right" style="color: var(--text-muted); font-family: 'Noto Serif SC', serif;"></p>
+        <div class="quote-text-container">
+            <div class="quote-text">
+                <p id="quoteContent" class="text-xl md:text-3xl leading-relaxed md:leading-loose tracking-wider font-light mb-8" style="color: var(--text-main); font-family: 'Noto Serif SC', serif;"></p>
+                <p id="quoteSource" class="text-sm md:text-base tracking-widest text-right" style="color: var(--text-muted); font-family: 'Noto Serif SC', serif;"></p>
+            </div>
+            <div class="close-hint text-xs tracking-widest opacity-60" style="color: var(--text-dim); font-family: 'Noto Serif SC', serif;">点击任意处关闭</div>
         </div>
-        <div class="absolute bottom-12 text-xs tracking-widest opacity-60" style="color: var(--text-dim); font-family: 'Noto Serif SC', serif;">点击任意处关闭</div>
     </div>
 
     <footer class="relative w-full text-center z-10 mt-12 mb-8">
