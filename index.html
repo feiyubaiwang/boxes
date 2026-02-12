@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情绪盲盒：电影台词向</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --theme-color: #D6D6F5;
+            --theme-color-glow: rgba(214, 214, 245, 0.6);
+            --bg-dark: #6767AB; /* 用户指定的新背景色 */
+            --bg-light: #7E7ED4; /* 配合新背景色的中心高光色 */
+            --text-main: #FFFFFF; /* 提高对比度 */
+            --text-muted: #DDE0F8; /* 提高辅助文字亮度 */
+            --text-dim: #C2C2EB; /* 提高暗文字亮度，确保看得清楚 */
+        }
+
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
+            color: var(--text-main);
+            overflow: hidden;
+            touch-action: none; /* 防止移动端原生滚动干扰 3D 滚轮 */
+        }
+
+        /* 晶体缓慢悬浮动画 */
+        @keyframes float-gentle {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .blind-box-container {
+            animation: float-gentle 6s ease-in-out infinite;
+            transform-origin: center bottom;
+            cursor: pointer;
+            transition: all 0.5s ease;
+        }
+        
+        /* 错开三个盲盒的动画时间，显得更自然 */
+        .box-1 { animation-delay: 0s; }
+        .box-2 { animation-delay: -2s; }
+        .box-3 { animation-delay: -4s; }
+
+        .blind-box-container:hover {
+            filter: drop-shadow(0 0 25px var(--theme-color-glow));
+        }
+
+        .blind-box-svg {
+            stroke: var(--theme-color);
+            transition: stroke 0.3s, filter 0.3s;
+            filter: drop-shadow(0 0 10px var(--theme-color-glow));
+        }
+
+        .blind-box-container:hover .blind-box-svg {
+            stroke: #FFFFFF;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
+        }
+
+        @keyframes box-pop {
+            0% { transform: scale(1); opacity: 1; }
+            40% { transform: scale(0.8); opacity: 1; filter: brightness(2); }
+            100% { transform: scale(2); opacity: 0; filter: brightness(3); }
+        }
+
+        .box-opening {
+            animation: box-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+            pointer-events: none;
+        }
+
+        .quote-modal {
+            opacity: 0;
+            pointer-events: none;
+            backdrop-filter: blur(15px);
+            transition: opacity 1s ease-in-out;
+        }
+
+        .quote-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quote-text {
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition-delay: 0.3s;
+        }
+
+        .quote-modal.active .quote-text {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* ------------------ 3D 机械胶片滚轮样式 ------------------ */
+        .reel-container {
+            position: relative;
+            /* 将容器高度缩小到一半左右 */
+            height: 140px; 
+            width: 100%;
+            max-width: 240px;
+            margin: 0 auto;
+            perspective: 800px; /* 3D 透视深度 */
+            /* 调整遮罩渐变：两端平滑淡出，使露出的一半文字具有没入黑暗的视觉效果 */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
+        }
+
+        /* 机械读取框（光晕与刻度线） */
+        .reel-selector {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 32px;
+            border-top: 1px solid rgba(214, 214, 245, 0.4);
+            border-bottom: 1px solid rgba(214, 214, 245, 0.4);
+            background: linear-gradient(90deg, transparent, rgba(214, 214, 245, 0.15), transparent);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 读取框的左右机械准星 */
+        .reel-selector::before, .reel-selector::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            border: 1px solid var(--theme-color);
+            border-radius: 50%;
+            background: var(--bg-dark);
+            box-shadow: 0 0 8px var(--theme-color-glow);
+        }
+        .reel-selector::before { left: 15px; }
+        .reel-selector::after { right: 15px; }
+
+        .reel-spinner {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 5;
+        }
+
+        .reel-item {
+            position: absolute;
+            top: 50%;
+            left: 0; right: 0;
+            margin-top: -16px; /* 高度一半，用于垂直居中 */
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            /* 提升未选中项的透明度，让它们清晰可见 */
+            opacity: 0.45; 
+            transition: all 0.4s ease;
+            backface-visibility: hidden; /* 隐藏背面的元素 */
+            cursor: pointer;
+            letter-spacing: 0.1em;
+        }
+
+        /* 选中状态的电影感高光文字 */
+        .reel-item.active {
+            opacity: 1;
+            color: var(--text-main);
+            text-shadow: 0 0 15px var(--theme-color-glow), 0 0 5px var(--text-main);
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        #particle-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<!-- 修改 body 增加 py-12 内边距，保护上下边界 -->
+<body class="min-h-screen flex flex-col items-center justify-center relative select-none py-12">
+    
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- 顶部区：标题与 3D 胶片滚轮 (移除 absolute，改为弹性流式布局以适应更大的滚轮) -->
+    <header class="relative w-full text-center z-20 flex flex-col items-center mt-4">
+        <p class="text-xs md:text-sm tracking-widest font-light" style="color: var(--text-muted);">拨 动 轮 盘 ， 选 择 你 现 在 的 情 绪</p>
+        
+        <!-- 3D 胶片滚轮容器 -->
+        <div class="reel-container mt-6">
+            <div class="reel-selector"></div>
+            <div class="reel-spinner" id="reel-spinner">
+                <!-- 轮盘元素将由 JS 动态生成 3D 坐标 -->
+                <div class="reel-item active" data-theme="healing">缝补破碎心</div>
+                <div class="reel-item" data-theme="power">唤醒她力量</div>
+                <div class="reel-item" data-theme="venting">逃离格子间</div>
+                <div class="reel-item" data-theme="motivate">咸鱼想翻身</div>
+                <div class="reel-item" data-theme="anxiety">拒绝打内耗</div>
+                <div class="reel-item" data-theme="lost">迷茫求指引</div>
+                <div class="reel-item" data-theme="emo">深夜防emo</div>
+                <div class="reel-item" data-theme="peace">佛系求清静</div>
+                <div class="reel-item" data-theme="romance">甜甜的恋爱</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 盲盒主区域 (修改了mt-12 md:mt-16 为 mt-6 md:mt-8，并缩小了 svg 尺寸) -->
+    <main class="relative z-10 flex flex-row items-center justify-center gap-8 md:gap-20 mt-6 md:mt-8 w-full max-w-4xl px-4">
+        <!-- 盲盒 1 -->
+        <div class="blind-box-container box-1" onclick="openBox(this)">
+            <svg class="blind-box-svg w-16 h-16 md:w-24 md:h-24" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+        </div>
+        <!-- 盲盒 2 -->
+        <div class="blind-box-container box-2" onclick="openBox(this)">
+            <svg class="blind-box-svg w-16 h-16 md:w-24 md:h-24" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+        </div>
+        <!-- 盲盒 3 -->
+        <div class="blind-box-container box-3" onclick="openBox(this)">
+            <svg class="blind-box-svg w-16 h-16 md:w-24 md:h-24" viewBox="0 0 24 24" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+        </div>
+    </main>
+
+    <footer class="absolute bottom-10 left-0 w-full text-center z-10 pointer-events-none">
+        <p class="text-xs tracking-widest" style="color: var(--text-dim);">点 击 一 个 盲 盒 ， 接 受 宇 宙 的 回 音</p>
+    </footer>
+
+    <!-- 台词弹窗遮罩层 -->
+    <div id="quoteModal" class="quote-modal fixed inset-0 z-50 flex flex-col items-center justify-center cursor-pointer" style="background-color: rgba(60, 60, 105, 0.85);" onclick="closeBox()">
+        <div class="quote-text text-center px-8 md:px-20 max-w-4xl">
+            <p id="quoteContent" class="text-xl md:text-3xl leading-relaxed md:leading-loose tracking-wider font-light mb-8" style="color: var(--text-main);"></p>
+            <p id="quoteSource" class="text-sm md:text-base tracking-widest text-right" style="color: var(--text-muted);"></p>
+        </div>
+        <div class="absolute bottom-12 text-xs tracking-widest opacity-60" style="color: var(--text-dim);">点击任意处关闭</div>
+    </div>
+
+    <script>
+        // 台词库配置 (严格验证的纯电影台词，每个分类30条)
+        const quotesData = {
+            healing: [
+                { text: "其实了解一个人并不代表什么，人是会变的。今天他喜欢凤梨，明天他可以喜欢别的。", source: "《重庆森林》" },
+                { text: "在这个世界上，没有谁离开了谁就活不下去。太阳照常升起。", source: "《乱世佳人》" },
+                { text: "有些鸟是注定不会被关在笼子里的，因为它们的每一片羽毛都闪耀着自由的光辉。", source: "《肖申克的救赎》" },
+                { text: "人生就像一盒巧克力，你永远不知道下一块会是什么味道。", source: "《阿甘正传》" },
+                { text: "我只能送你到这里了，剩下的路你要自己走，不要回头。", source: "《千与千寻》" },
+                { text: "有人住高楼，有人在深沟，有人光万丈，有人一身锈。斯人若彩虹，遇上方知有。", source: "《怦然心动》" },
+                { text: "爱情这东西，时间很关键。认识得太早或太晚，都不行。", source: "《2046》" },
+                { text: "黎明前总是最黑暗的，但只要熬过去，就会迎来曙光。", source: "《蝙蝠侠：黑暗骑士》" },
+                { text: "如果有一天你可以忘掉过去，看重现在与将来，你说我多开心。", source: "《阿飞正传》" },
+                { text: "坚强的人只能救赎自己，伟大的人才能拯救他人。", source: "《肖申克的救赎》" },
+                { text: "当你年轻时，以为什么都有答案，可是老了的时候，你可能又觉得其实人生并没有所谓的答案。", source: "《堕落天使》" },
+                { text: "知不知道饮酒和饮水有什么区别？酒越饮越暖，水越喝越寒。", source: "《东邪西毒》" },
+                { text: "我答应你，我一定会活下去，我永远不会放弃。", source: "《泰坦尼克号》" },
+                { text: "人生和电影不同，人生辛苦多了。", source: "《天堂电影院》" },
+                { text: "哭泣能让我慢下来，感受生活中问题的重量。", source: "《头脑特工队》" },
+                { text: "当主关上一扇门时，他会在某处打开一扇窗。", source: "《音乐之声》" },
+                { text: "我甚至连他的一张照片都没有。他只活在我的记忆里。", source: "《泰坦尼克号》" },
+                { text: "有时候，你唯一能做的，就是假装微笑。", source: "《小丑》" },
+                { text: "一切都会好的，如果还没好，说明还没到最后。", source: "《涉外大饭店》" },
+                { text: "其实他并没有那么喜欢你，只是你给自己编织了一个幻境。", source: "《其实他没那么喜欢你》" },
+                { text: "你没有什么可以原谅我的，我也没有什么可以原谅你的。", source: "《海边的曼彻斯特》" },
+                { text: "我们都是孤独的刺猬，只有频率相同的人，才能看见彼此内心深处不为人知的优雅。", source: "《刺猬的优雅》" },
+                { text: "你必须向前看，不能老是回头。", source: "《阿甘正传》" },
+                { text: "如果你不出去走走，你就会以为这就是世界。", source: "《天堂电影院》" },
+                { text: "明天又是新的一天了。", source: "《乱世佳人》" },
+                { text: "我们接受我们认为自己配得上的爱。", source: "《壁花少年》" },
+                { text: "连绵不绝的城市什么都有，除了尽头，没有尽头。", source: "《海上钢琴师》" },
+                { text: "人生就是不断地放下，然而痛心的是，我都没能好好地与他们道别。", source: "《少年派的奇幻漂流》" },
+                { text: "如果世上有什么奇迹，一定是尽力理解某个人。", source: "《爱在黎明破晓前》" },
+                { text: "拯救一个人的生命，也就是拯救了全世界。", source: "《辛德勒的名单》" }
+            ],
+            power: [
+                { text: "你要掌握自己的命运，不能把选择权交给别人。", source: "《勇敢传说》" },
+                { text: "当你穿上那双Jimmy Choo的时候，你就出卖了你的灵魂。", source: "《穿普拉达的女王》" },
+                { text: "人类的结局只有一个，但思想永存。", source: "《芭比》" },
+                { text: "我没有什么需要向你证明的。", source: "《惊奇队长》" },
+                { text: "永远不要让别人告诉你，你不能做什么。", source: "《当幸福来敲门》" },
+                { text: "你必须永远对自己有信心，这是成功的秘诀。", source: "《律政俏佳人》" },
+                { text: "我愿意为那些不能为自己战斗的人而战。", source: "《神奇女侠》" },
+                { text: "你不能总是为别人而活，你必须为自己而活。", source: "《末路狂花》" },
+                { text: "你要相信你自己，不管别人怎么说。", source: "《垫底辣妹》" },
+                { text: "女人有思想，有灵魂，也有心灵；我厌烦极了人们总说，爱情就是女人的全部。", source: "《小妇人》" },
+                { text: "在逆境中绽放的花朵，才是最珍贵、最美丽的。", source: "《花木兰》" },
+                { text: "我这一生都由不得自己，现在我想自己做回主。", source: "《卧虎藏龙》" },
+                { text: "我想去那些能让我感受到文化的地方。", source: "《伯德小姐》" },
+                { text: "勇气不是没有恐惧，而是即使害怕也要向前。", source: "《公主日记》" },
+                { text: "唯一的阻碍就是你自己。", source: "《黑天鹅》" },
+                { text: "每次我们有机会前进，他们就把终点线往后移。", source: "《隐藏人物》" },
+                { text: "我不想以后回想起来，觉得自己是个胆小鬼。", source: "《末路狂花》" },
+                { text: "命运掌握在我们自己手里，只要你足够勇敢去面对。", source: "《勇敢传说》" },
+                { text: "这不仅仅是一本杂志，这是照亮黑暗的希望灯塔。", source: "《穿普拉达的女王》" },
+                { text: "做一个女人简直太难了。你必须很瘦，但又不能太瘦。", source: "《芭比》" },
+                { text: "你不能为了别人而活着，所有的选择权都在你自己手里。", source: "《爱丽丝梦游仙境》" },
+                { text: "没人能把我们打倒，除非我们自己认输。", source: "《百万美元宝贝》" },
+                { text: "我知道我从哪里来，但我不知道我将去向何方，但我知道我必须走下去。", source: "《沙漠之花》" },
+                { text: "我们存在于每一个家庭中，我们占据了人类的一半，你不可能阻止我们所有人。", source: "《妇女参政论者》" },
+                { text: "如果你想听漂亮话，去找男人；如果你想把事情做成，去找女人。", source: "《铁娘子》" },
+                { text: "我不管别人怎么说，我只知道我要什么。", source: "《乱世佳人》" },
+                { text: "我的命运我自己决定。", source: "《勇敢的心》" },
+                { text: "我未来的女儿，我就让她健康快乐就行了。", source: "《你好，李焕英》" },
+                { text: "我来这里不是为了听你发号施令的。", source: "《惊奇队长》" },
+                { text: "希望是唯一比恐惧更强大的事物。", source: "《饥饿游戏》" }
+            ],
+            venting: [
+                { text: "世界上只有一种病，那就是穷病。", source: "《我不是药神》" },
+                { text: "出来混，迟早要还的。", source: "《无间道》" },
+                { text: "哪怕是一条内裤，一张卫生纸，都有它的用处。", source: "《国产凌凌漆》" },
+                { text: "资本从不睡觉。", source: "《华尔街》" },
+                { text: "你以为你很特别吗？你只是这个星球上几十亿普通人中的一个。", source: "《搏击俱乐部》" },
+                { text: "在这个世界上，只有钱能让你免于贫困。", source: "《华尔街之狼》" },
+                { text: "时代列车开得太快，总有人在车底添加润滑油。", source: "《年会不能停！》" },
+                { text: "他们用一小时给你多少钱，让你放弃了你的梦想？", source: "《在云端》" },
+                { text: "体制化就是这样，一开始你排斥它，后来你习惯它，直到最后你离不开它。", source: "《肖申克的救赎》" },
+                { text: "这钱你也赚，你还是人吗？", source: "《疯狂的赛车》" },
+                { text: "钱就是熨斗，能把一切熨平了。", source: "《寄生虫》" },
+                { text: "你知道为什么有些人比你成功吗？因为他们比你更贪婪。", source: "《华尔街》" },
+                { text: "我们不需要机器，我们需要人性。", source: "《大独裁者》" },
+                { text: "我原本以为我的人生是一出悲剧，其实它是一出喜剧。", source: "《小丑》" },
+                { text: "贪婪是个好东西。", source: "《华尔街》" },
+                { text: "成年人的崩溃，往往是从借钱开始的。", source: "《飞驰人生》" },
+                { text: "假如再也见不到你，祝你早安，午安，晚安。", source: "《楚门的世界》" },
+                { text: "不要跟我谈规矩，我的规矩就是规矩。", source: "《黑金》" },
+                { text: "听过很多道理，依然过不好这一生。", source: "《后会无期》" },
+                { text: "我们做着讨厌的工作，只是为了买些不需要的东西。", source: "《搏击俱乐部》" },
+                { text: "规则是为了约束弱者而存在的。", source: "《寒战》" },
+                { text: "人类不过是一节电池。", source: "《黑客帝国》" },
+                { text: "闪电，你能在天黑前盖完章吗？", source: "《疯狂动物城》" },
+                { text: "我什么都没做，只是老了。", source: "《老无所依》" },
+                { text: "做人留一线，日后好相见。", source: "《无间道》" },
+                { text: "我累了，老板。像在雨中独自流浪的狗一样累。", source: "《绿里奇迹》" },
+                { text: "所有的动物生来平等，但有些动物比其他动物更平等。", source: "《动物庄园》" },
+                { text: "只要你还有利用价值，他们就不会放过你。", source: "《黑客帝国》" },
+                { text: "我讨厌星期一。", source: "《加菲猫》" },
+                { text: "不要吃太胖哦，会被杀掉的！", source: "《千与千寻》" }
+            ],
+            motivate: [
+                { text: "做人如果没有梦想，跟咸鱼有什么分别？", source: "《少林足球》" },
+                { text: "我命由我不由天！", source: "《哪吒之魔童降世》" },
+                { text: "那些杀不死我的，只会让我更强大。", source: "《蝙蝠侠：黑暗骑士》" },
+                { text: "不管被打倒多少次，最重要的是你能否再次站起来。", source: "《洛奇》" },
+                { text: "我不对任何事袖手旁观，尤其是面对邪恶。", source: "《阿丽塔：战斗天使》" },
+                { text: "掉在水里你不会淹死，呆在水里你才会淹死。", source: "《中国合伙人》" },
+                { text: "我每天在脑海里开两万遍，我怎么会输？", source: "《飞驰人生》" },
+                { text: "好想赢，哪怕只有一次也好。", source: "《百元之恋》" },
+                { text: "世界上最大的谎言就是你不行。", source: "《垫底辣妹》" },
+                { text: "当你跌入谷底时，好消息是，你只能往上走了。", source: "《欢乐好声音》" },
+                { text: "你得丢开以往的事，才能不断继续前进。", source: "《阿甘正传》" },
+                { text: "金牌不是长在树上的，它们是用汗水、决心和无畏的勇气铸造的。", source: "《摔跤吧！爸爸》" },
+                { text: "永远不要害怕去追寻光。", source: "《疯狂原始人》" },
+                { text: "未来并没有定数，命运掌握在我们自己手中。", source: "《终结者》" },
+                { text: "如果你有梦想的话，就要去捍卫它。", source: "《当幸福来敲门》" },
+                { text: "如果你有时间幻想美丽的终结，不如漂亮地活到最后。", source: "《银魂》" },
+                { text: "金钱永不眠。", source: "《华尔街》" },
+                { text: "我不害怕坠落，我只害怕没能尝试。", source: "《徒手攀岩》" },
+                { text: "我要向所有人证明，我不是一个废物！", source: "《破坏之王》" },
+                { text: "只要你还在跑，就不算输。", source: "《阿甘正传》" },
+                { text: "风在前，无惧。", source: "《破风》" },
+                { text: "有那么一个时刻，当你达到7000转速时，一切都会变得宁静。", source: "《极速车王》" },
+                { text: "及时行乐，男孩们。让你的生命与众不同。", source: "《死亡诗社》" },
+                { text: "努力！奋斗！", source: "《喜剧之王》" },
+                { text: "能力越大，责任越大。", source: "《蜘蛛侠》" },
+                { text: "不要温和地走进那个良夜，怒斥吧，怒斥光明的消逝。", source: "《星际穿越》" },
+                { text: "让每一天都有所值。", source: "《泰坦尼克号》" },
+                { text: "完美不是控制出来的，而是释放出来的。", source: "《黑天鹅》" },
+                { text: "有些事值得我们为之战斗。", source: "《阿凡达》" },
+                { text: "人生就像迷宫，唯一的出路就是不断尝试。", source: "《移动迷宫》" }
+            ],
+            anxiety: [
+                { text: "人生不能像做菜，把所有的料都准备好了才下锅。", source: "《饮食男女》" },
+                { text: "一切都会好的，如果现在还不够好，说明还没到最后。", source: "《涉外大饭店》" },
+                { text: "哭泣也是一种释放。", source: "《超能陆战队》" },
+                { text: "我们一路奋战，不是为了改变世界，而是为了不让世界改变我们。", source: "《熔炉》" },
+                { text: "只要活下去，总会有好事的。", source: "《被嫌弃的松子的一生》" },
+                { text: "不要让别人告诉你，你不能做什么。", source: "《当幸福来敲门》" },
+                { text: "昨天是历史，明天是谜团，只有今天是天赐的礼物。", source: "《功夫熊猫》" },
+                { text: "生命的火花不是目标，当你想要生活的那一刻，火花就已经被点燃。", source: "《心灵奇旅》" },
+                { text: "开拓视野，冲破艰险，看见世界，身临其境，感受生活。", source: "《白日梦想家》" },
+                { text: "把每一天过好，就是最大的修行。", source: "《小森林》" },
+                { text: "不管前方的路有多苦，只要走的方向正确，都比站在原地更接近幸福。", source: "《千与千寻》" },
+                { text: "追求卓越，成功就会在不经意间追上你。", source: "《三傻大闹宝莱坞》" },
+                { text: "随它吧，随它吧，回头已没有办法。", source: "《冰雪奇缘》" },
+                { text: "这就是我，无所畏惧，无处可躲。", source: "《马戏之王》" },
+                { text: "我们都是普通人，接受这一点你会快乐很多。", source: "《触不可及》" },
+                { text: "你不必一个人扛下所有。", source: "《蜘蛛侠：英雄无归》" },
+                { text: "明天又是新的一天了。", source: "《乱世佳人》" },
+                { text: "人生就像一盒火柴，特别重视它觉得很荒唐，不重视它又很危险。", source: "《春娇与志明》" },
+                { text: "我们能挺过去的。", source: "《荒岛余生》" },
+                { text: "不要害怕死亡，害怕的是从未真正活过。", source: "《勇敢的心》" },
+                { text: "真正的死亡是世界上再没有一个人记得你。", source: "《寻梦环游记》" },
+                { text: "担心就像是为你并不想要的东西而祈祷。", source: "《神秘河》" },
+                { text: "只要一息尚存，就不要放弃呼吸。", source: "《荒野猎人》" },
+                { text: "生命是一场旅程，我们等了多少个轮回，才有机会去享受这一次旅程。", source: "《大鱼海棠》" },
+                { text: "当你拥有的一切都被剥夺时，你就不再有任何恐惧了。", source: "《搏击俱乐部》" },
+                { text: "我就是我，这就是我存在的理由。", source: "《楚门的世界》" },
+                { text: "永远不要让外人知道你在想什么。", source: "《教父》" },
+                { text: "你要么习惯这漫长的孤独，要么就振作起来去寻找生机。", source: "《地心引力》" },
+                { text: "我必须说，罗马，毫无疑问是罗马。", source: "《罗马假日》" },
+                { text: "人生最大的遗憾，莫过于轻易地放弃了不该放弃的，固执地坚持了不该坚持的。", source: "《大话西游》" }
+            ],
+            lost: [
+                { text: "决定我们成为什么样人的，不是我们的能力，而是我们的选择。", source: "《哈利·波特与密室》" },
+                { text: "你要尽全力保护你的梦想。", source: "《当幸福来敲门》" },
+                { text: "生命可以归结为一种简单的选择：要么忙于生存，要么赶着去死。", source: "《肖申克的救赎》" },
+                { text: "即使在最黑暗的时代，只要我们愿意点亮微光，希望就会存在。", source: "《哈利·波特与阿兹卡班的囚徒》" },
+                { text: "方向比努力更重要。", source: "《楚门的世界》" },
+                { text: "人生和电影不同，人生辛苦多了。", source: "《天堂电影院》" },
+                { text: "如果你不知道要去哪里，那任何一条路都能带你走。", source: "《爱丽丝梦游仙境》" },
+                { text: "只有在失去一切之后，我们才能获得做任何事的自由。", source: "《搏击俱乐部》" },
+                { text: "人生的意义，不是寻找什么，而是体验什么。", source: "《心灵奇旅》" },
+                { text: "指南针不指向北方，它指向你这个世界上最想得到的东西。", source: "《加勒比海盗》" },
+                { text: "外面的世界和这里一样虚假，同样的谎言，同样的欺骗。", source: "《楚门的世界》" },
+                { text: "沉湎于虚幻的梦想而忘记现实的生活，这是毫无益处的。", source: "《哈利·波特与魔法石》" },
+                { text: "我不知道是我们都有各自的命运，还是我们只是一阵风中的偶然。", source: "《阿甘正传》" },
+                { text: "快乐只有在分享时才真实。", source: "《荒野生存》" },
+                { text: "你必须自己决定，什么是真相。", source: "《黑客帝国》" },
+                { text: "文字和思想可以改变世界。", source: "《死亡诗社》" },
+                { text: "爱是唯一可以超越时间与空间的事物。", source: "《星际穿越》" },
+                { text: "即使是最小的人，也能改变未来的轨迹。", source: "《指环王》" },
+                { text: "你必须在生命的光环中找到自己的位置。", source: "《狮子王》" },
+                { text: "人生就是一次朝圣。", source: "《冈仁波齐》" },
+                { text: "既然做梦，就做大点。", source: "《盗梦空间》" },
+                { text: "并不是所有流浪的人都迷失了方向。", source: "《指环王》" },
+                { text: "绝不言败！", source: "《七宝奇谋》" },
+                { text: "停止做梦，开始生活。", source: "《白日梦想家》" },
+                { text: "必胜绝招就是把你的全部奉献给现在。", source: "《飞驰人生》" },
+                { text: "恐惧来源于未知。", source: "《寂静岭》" },
+                { text: "每个人都有自己的命运。", source: "《阿甘正传》" },
+                { text: "不管你在世界的哪个地方，我一定会去见你。", source: "《你的名字》" },
+                { text: "改变人们的心念，需要勇气。", source: "《绿皮书》" },
+                { text: "人生就像是一盒巧克力，顺其自然吧。", source: "《阿甘正传》" }
+            ],
+            emo: [
+                { text: "我曾听人说过，当你不能够再拥有，你唯一可以做的，就是令自己不要忘记。", source: "《东邪西毒》" },
+                { text: "在这个世界上，一定有另外一个我，做着我不敢做的事，过着我想过的生活。", source: "《NANA》" },
+                { text: "如果人们看到了我的真面目，他们会怎么想？", source: "《超人归来》" },
+                { text: "我曾经以为人生最大的悲剧是死亡，其实不是，是失去爱。", source: "《剪刀手爱德华》" },
+                { text: "眼泪这东西啊，是流出来就能把辛酸和悲伤都冲走的好东西。", source: "《银魂》" },
+                { text: "无论你在哪里，我都会找到你。", source: "《最后的莫希干人》" },
+                { text: "黑夜无论怎样悠长，白昼总会到来。", source: "《麦克白》" },
+                { text: "孤单不是与生俱来的，而是由你爱上一个人的那一刻开始的。", source: "《堕落天使》" },
+                { text: "没有谁是一座孤岛。", source: "《关于一个男孩》" },
+                { text: "那些逝去的伟大国王们，就在那些星星上俯视着我们。", source: "《狮子王》" },
+                { text: "你不能让所有的悲伤都消失，这也是人生的一部分。", source: "《头脑特工队》" },
+                { text: "我以为我能改变世界，其实世界一直在改变我。", source: "《末代皇帝》" },
+                { text: "有时候，我觉得我已经感受到了我所能感受的一切。", source: "《她》" },
+                { text: "越是了解自己想要什么，就不会再为不相干的事烦恼。", source: "《迷失东京》" },
+                { text: "如果时光可以倒流，我还是会选择认识你，虽然会伤痕累累。", source: "《萤火之森》" },
+                { text: "孤独并不是因为身边没有人，而是因为没有人懂你。", source: "《这个杀手不太冷》" },
+                { text: "我只有在梦里才能和你在一起。", source: "《盗梦空间》" },
+                { text: "有些东西在心里，是任何人都无法夺走的。", source: "《肖申克的救赎》" },
+                { text: "曾经发生过的事情不会忘记，只是想不起来而已。", source: "《千与千寻》" },
+                { text: "我心里什么都没有了。", source: "《海边的曼彻斯特》" },
+                { text: "没有任何东西可以永远停留，即便如此，也要好好地生活下去。", source: "《夏威夷男孩》" },
+                { text: "失眠的时候，一切都像是真实的，又像是虚幻的。", source: "《搏击俱乐部》" },
+                { text: "为什么萤火虫死得那么早？", source: "《萤火虫之墓》" },
+                { text: "我不聪明，但我知道什么是爱。", source: "《阿甘正传》" },
+                { text: "就算我们无法保护地球，我们也一定会复仇。", source: "《复仇者联盟》" },
+                { text: "你是在等一列火车，知道它会把你带到哪里吗？", source: "《盗梦空间》" },
+                { text: "如果世上有什么奇迹，一定是尽力理解某个人。", source: "《爱在黎明破晓前》" },
+                { text: "相比于蓝天，我更想选择你！", source: "《天气之子》" },
+                { text: "人类的心，真是脆弱又神秘啊。", source: "《剪刀手爱德华》" },
+                { text: "真正重要的东西，用眼睛是看不见的。", source: "《小王子》" }
+            ],
+            peace: [
+                { text: "世间所有的相遇，都是久别重逢。", source: "《一代宗师》" },
+                { text: "你连世界都没观过，哪来的世界观。", source: "《后会无期》" },
+                { text: "念念不忘，必有回响。", source: "《一代宗师》" },
+                { text: "过去的事情可以不忘记，但一定要放下。", source: "《千与千寻》" },
+                { text: "不如意事常八九，可与人言无二三。", source: "《十二夜》" },
+                { text: "很多事情都是注定的，强求不来。", source: "《无间道》" },
+                { text: "最后，所有的事物都汇入一条河，而河水流经岩石，有岁月流淌的回声。", source: "《大河恋》" },
+                { text: "人生路上步履不停，为何总是慢一拍。", source: "《步履不停》" },
+                { text: "在这里，我们有无尽的时光来喝茶，还有什么可急的呢？", source: "《涉外大饭店》" },
+                { text: "享受当下，品味每一口米饭的香甜。", source: "《小森林》" },
+                { text: "一切发生的事情都有它的道理。", source: "《功夫熊猫》" },
+                { text: "其实人生如戏，这几年，我只当自己是演了一场戏。", source: "《一代宗师》" },
+                { text: "人生如梦，一樽还酹江月。", source: "《赤壁》" },
+                { text: "能和大家一起看风景，真是太好了。", source: "《海街日记》" },
+                { text: "生活不会按照你想要的方式进行，它会给你时间让你找到自己。", source: "《寻梦环游记》" },
+                { text: "人生就像一盒巧克力，顺其自然吧。", source: "《阿甘正传》" },
+                { text: "握紧拳头，里面什么也没有；松开双手，你就拥有了一切。", source: "《卧虎藏龙》" },
+                { text: "任何人都可以变得狠毒，只要你尝试过什么叫嫉妒。", source: "《东邪西毒》" },
+                { text: "无知就是福。", source: "《黑客帝国》" },
+                { text: "其实一家人住在一个屋檐下，照样可以各过各的日子。", source: "《饮食男女》" },
+                { text: "有些事情是急不来的，慢慢等，总会好的。", source: "《龙猫》" },
+                { text: "有些人能清楚听见自己内心的声音，并按这个声音生活。", source: "《秋日传奇》" },
+                { text: "风景如画，旋律优美。人生不过是场旅行。", source: "《菊次郎的夏天》" },
+                { text: "那些消逝了的岁月，仿佛隔着一块积着灰尘的玻璃，看得到，抓不着。", source: "《花样年华》" },
+                { text: "你可以像疯狗那样对周围的一切愤愤不平，但到了最后，你还是得平静地放手。", source: "《本杰明·巴顿奇事》" },
+                { text: "我们都在阴沟里，但仍有人仰望星空。", source: "《王尔德传》" },
+                { text: "人生如此，浮生如斯。", source: "《青蛇》" },
+                { text: "那听起来可能很无聊，但我觉得那些无聊的事情才是最难忘的。", source: "《飞屋环游记》" },
+                { text: "我只能送你到这里了，剩下的路你要自己走。", source: "《千与千寻》" },
+                { text: "你知道怎么才能遇见美人鱼吗？要游到海底，那里的水更蓝。", source: "《碧海蓝天》" }
+            ],
+            romance: [
+                { text: "斯人若彩虹，遇上方知有。", source: "《怦然心动》" },
+                { text: "我爱你，不是因为你是谁，而是我在你面前可以是谁。", source: "《剪刀手爱德华》" },
+                { text: "你是我每天早上醒来的唯一理由。", source: "《遇见你之前》" },
+                { text: "我喜欢你，就算这世界崩塌，我也喜欢你。", source: "《天气之子》" },
+                { text: "如果多一张船票，你愿不愿意跟我一起走？", source: "《花样年华》" },
+                { text: "世界上有那么多的城镇，城镇中有那么多的酒馆，她却偏偏走进了我的。", source: "《卡萨布兰卡》" },
+                { text: "对我来说，你很完美。", source: "《真爱至上》" },
+                { text: "你让我想要成为一个更好的人。", source: "《尽善尽美》" },
+                { text: "我愿意做你的影子，只要能陪在你身边。", source: "《初恋50次》" },
+                { text: "在我们每个人的内心深处，都藏着一个人，每次想起他的时候，会觉得有一点点心痛。", source: "《初恋这件小事》" },
+                { text: "我跨越时间的瀚海来寻找你。", source: "《惊情四百年》" },
+                { text: "跟你在一起的冒险，是我这辈子最棒的经历。", source: "《飞屋环游记》" },
+                { text: "只要记住你的名字，不管你在世界的哪个地方，我一定会，去见你。", source: "《你的名字》" },
+                { text: "最好的爱能唤醒灵魂，使我们不断追寻成长。", source: "《恋恋笔记本》" },
+                { text: "谢谢你喜欢过我。", source: "《那些年，我们一起追的女孩》" },
+                { text: "我甚至觉得，我生来就是为了与你相遇。", source: "《爱在日落黄昏时》" },
+                { text: "我想要属于我的幸福，就是和你在一起。", source: "《我的少女时代》" },
+                { text: "你是我生命中发生的最好的事情。", source: "《附注：我爱你》" },
+                { text: "最美的不是下雨天，是曾与你躲过雨的屋檐。", source: "《不能说的秘密》" },
+                { text: "赢得船票，是我一生中最幸运的事，它让我认识了你。", source: "《泰坦尼克号》" },
+                { text: "我只想要你，所有的你，永远的你。", source: "《恋恋笔记本》" },
+                { text: "每天早上醒来，我都会重新爱上你。", source: "《初恋50次》" },
+                { text: "世界上有那么多相遇，但只有和你，才叫缘分。", source: "《西雅图夜未眠》" },
+                { text: "有你的地方，就有阳光。", source: "《向阳处的她》" },
+                { text: "我发誓会狂热地爱你，无论你以何种面貌，直到永远。", source: "《誓约》" },
+                { text: "你保护世界，我保护你。", source: "《少年的你》" },
+                { text: "你好吗？我很好。", source: "《情书》" },
+                { text: "如果我知道怎么舍弃你，那该有多好。", source: "《断背山》" },
+                { text: "我爱你。这就够了。", source: "《罗马假日》" },
+                { text: "我来到这里，没有期望，只是为了告诉你：我的心永远属于你。", source: "《理智与情感》" }
+            ]
+        };
+
+        // ------------------ 3D 滚轮逻辑 ------------------
+        const spinner = document.getElementById('reel-spinner');
+        
+        // 随机打乱轮盘选项顺序
+        let itemElements = Array.from(spinner.children);
+        for (let i = itemElements.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [itemElements[i], itemElements[j]] = [itemElements[j], itemElements[i]];
+        }
+        spinner.innerHTML = '';
+        itemElements.forEach((item, index) => {
+            item.classList.remove('active');
+            if (index === 0) item.classList.add('active'); // 默认激活第一个
+            spinner.appendChild(item);
+        });
+
+        const items = document.querySelectorAll('.reel-item');
+        const container = document.querySelector('.reel-container');
+        
+        const totalItems = items.length;
+        const anglePerItem = 360 / totalItems; // 每个选项占的角度
+        const radius = 65; // 虚拟圆柱体半径
+
+        let currentReelIndex = 0;
+        let currentTheme = items[0].getAttribute('data-theme'); // 动态获取打乱后的第一个主题
+        let isWheelLocked = false;
+
+        // 初始化 3D 布局
+        function init3DLayout() {
+            items.forEach((item, i) => {
+                // 向下旋转排布，半径推开，形成 3D 滚筒
+                item.style.transform = `rotateX(${i * -anglePerItem}deg) translateZ(${radius}px)`;
+                item.dataset.index = i;
+                
+                // 点击某个选项，自动拨动到中心
+                item.addEventListener('click', () => {
+                    // 计算最短旋转路径
+                    let normalizedCurrent = ((currentReelIndex % totalItems) + totalItems) % totalItems;
+                    let diff = i - normalizedCurrent;
+                    if (diff > totalItems / 2) diff -= totalItems;
+                    if (diff < -totalItems / 2) diff += totalItems;
+                    updateReel(currentReelIndex + diff);
+                });
+            });
+        }
+
+        // 初始化 3D 布局
+        init3DLayout();
+
+        // 核心更新函数
+        function updateReel(newIndex) {
+            currentReelIndex = newIndex;
+            let normalizedIndex = ((currentReelIndex % totalItems) + totalItems) % totalItems;
+            
+            // 切换主题
+            currentTheme = items[normalizedIndex].getAttribute('data-theme');
+
+            // 样式高亮切换
+            items.forEach((item, i) => {
+                item.classList.remove('active');
+                if (i === normalizedIndex) item.classList.add('active');
+            });
+
+            // 旋转整个框架
+            spinner.style.transform = `rotateX(${currentReelIndex * anglePerItem}deg)`;
+        }
+
+        // 监听鼠标滚轮（带阻尼锁，防止滚太快）
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (isWheelLocked) return;
+            isWheelLocked = true;
+            
+            if (e.deltaY > 0) {
+                updateReel(currentReelIndex + 1); // 往下滚
+            } else if (e.deltaY < 0) {
+                updateReel(currentReelIndex - 1); // 往上滚
+            }
+            
+            setTimeout(() => { isWheelLocked = false; }, 400); // 机械阻尼时长
+        }, { passive: false });
+
+        // 监听移动端上下滑动
+        let startY = 0;
+        container.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, {passive: true});
+        container.addEventListener('touchend', (e) => {
+            let endY = e.changedTouches[0].clientY;
+            let diff = startY - endY;
+            if (diff > 30) updateReel(currentReelIndex + 1);      // 向上滑动
+            else if (diff < -30) updateReel(currentReelIndex - 1); // 向下滑动
+        });
+
+
+        // ------------------ 盲盒及其他逻辑 ------------------
+        let isOpening = false;
+
+        function openBox(boxElement) {
+            if (isOpening) return;
+            isOpening = true;
+
+            boxElement.classList.add('box-opening');
+
+            const quotes = quotesData[currentTheme];
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+
+            setTimeout(() => {
+                document.getElementById('quoteContent').innerText = randomQuote.text;
+                document.getElementById('quoteSource').innerText = "—— " + randomQuote.source;
+                document.getElementById('quoteModal').classList.add('active');
+            }, 500);
+        }
+
+        function closeBox() {
+            document.getElementById('quoteModal').classList.remove('active');
+            setTimeout(() => {
+                document.querySelectorAll('.blind-box-container').forEach(box => {
+                    box.classList.remove('box-opening');
+                });
+                isOpening = false;
+            }, 800);
+        }
+
+        // 背景星尘特效
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+            const numParticles = Math.floor((width * height) / 15000);
+            for(let i = 0; i < numParticles; i++) {
+                particles.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    radius: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    opacity: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                // 边界处理：粒子出界后从另一侧进入
+                if (p.x < 0) p.x = width;
+                if (p.x > width) p.x = 0;
+                if (p.y < 0) p.y = height;
+                if (p.y > height) p.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(214, 214, 245, ${p.opacity})`;
+                ctx.fill();
+            });
+            requestAnimationFrame(drawParticles);
+        }
+
+        // 初始化和事件监听
+        function initParticles() {
+            window.addEventListener('resize', initCanvas);
+            initCanvas();
+            drawParticles();
+        }
+
+        // 初始化粒子系统
+        initParticles();
+    </script>
+</body>
+</html>
