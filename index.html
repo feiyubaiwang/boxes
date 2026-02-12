@@ -79,6 +79,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
         }
 
         .quote-modal.active {
@@ -93,6 +99,8 @@
             transition-delay: 0.3s;
             width: 100%;
             max-width: 90%;
+            text-align: center;
+            padding: 0 20px;
         }
 
         .quote-modal.active .quote-text {
@@ -242,18 +250,22 @@
         </div>
     </main>
 
-    <footer class="absolute bottom-12 left-0 w-full text-center z-10 pointer-events-none">
-        <p class="text-sm tracking-widest" style="color: var(--text-dim);">点 击 一 个 盲 盒 ， 接 受 宇 宙 的 回 音</p>
-    </footer>
+    <!-- 盲盒下方提示文字 -->
+    <div class="relative z-10 w-full text-center mt-8">
+        <p class="text-sm md:text-base tracking-widest font-light" style="color: var(--text-dim);">点 击 一 个 盲 盒 ， 接 受 宇 宙 的 回 音</p>
+    </div>
 
     <!-- 台词弹窗遮罩层 -->
-    <div id="quoteModal" class="quote-modal fixed inset-0 z-50 flex flex-col items-center justify-center cursor-pointer" style="background-color: rgba(100, 70, 55, 0.85);" onclick="closeBox()">
-        <div class="quote-text text-center px-8 md:px-20 max-w-4xl">
+    <div id="quoteModal" class="quote-modal cursor-pointer" style="background-color: rgba(100, 70, 55, 0.85);" onclick="closeBox()">
+        <div class="quote-text">
             <p id="quoteContent" class="text-xl md:text-3xl leading-relaxed md:leading-loose tracking-wider font-light mb-8" style="color: var(--text-main); font-family: 'Noto Serif SC', serif;"></p>
             <p id="quoteSource" class="text-sm md:text-base tracking-widest text-right" style="color: var(--text-muted); font-family: 'Noto Serif SC', serif;"></p>
         </div>
         <div class="absolute bottom-12 text-xs tracking-widest opacity-60" style="color: var(--text-dim); font-family: 'Noto Serif SC', serif;">点击任意处关闭</div>
     </div>
+
+    <footer class="relative w-full text-center z-10 mt-12 mb-8">
+    </footer>
 
     <script>
         // 台词库配置 (严格验证的纯电影台词，每个分类30条)
