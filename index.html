@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --theme-color: #D6D6F5;
-            --theme-color-glow: rgba(214, 214, 245, 0.6);
-            --bg-dark: #6767AB; /* 用户指定的新背景色 */
-            --bg-light: #7E7ED4; /* 配合新背景色的中心高光色 */
+            --theme-color: #F8E8D5;
+            --theme-color-glow: rgba(248, 232, 213, 0.8);
+            --bg-dark: #A77865; /* 用户指定的新背景色 */
+            --bg-light: #C99A87; /* 配合新背景色的中心高光色 */
             --text-main: #FFFFFF; /* 提高对比度 */
-            --text-muted: #DDE0F8; /* 提高辅助文字亮度 */
-            --text-dim: #C2C2EB; /* 提高暗文字亮度，确保看得清楚 */
+            --text-muted: #F8E8D5; /* 提高辅助文字亮度 */
+            --text-dim: #E8D8C5; /* 提高暗文字亮度，确保看得清楚 */
         }
 
         body {
@@ -699,7 +699,7 @@
 
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(214, 214, 245, ${p.opacity})`;
+                ctx.fillStyle = `rgba(248, 232, 213, ${p.opacity})`;
                 ctx.fill();
             });
             requestAnimationFrame(drawParticles);
