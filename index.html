@@ -84,6 +84,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
         .quote-modal.active {
@@ -96,9 +97,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            max-width: 600px;
-            padding: 20px;
+            max-width: 90%;
             width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .quote-text {
@@ -108,6 +110,8 @@
             transition-delay: 0.3s;
             text-align: center;
             width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .quote-modal.active .quote-text {
@@ -117,6 +121,7 @@
 
         .close-hint {
             margin-top: 20px;
+            text-align: center;
         }
 
         /* ------------------ 3D 机械胶片滚轮样式 ------------------ */
