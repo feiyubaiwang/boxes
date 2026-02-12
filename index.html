@@ -19,11 +19,12 @@
 
         body {
             font-family: 'Noto Serif SC', serif;
+            background-color: #A77865 !important;
             background: #A77865 !important;
-            background: radial-gradient(circle at center, #C99A87 0%, #A77865 100%) !important;
             color: #FFFFFF !important;
             overflow: hidden !important;
             touch-action: none !important;
+            min-height: 100vh !important;
         }
 
         /* 晶体缓慢悬浮动画 */
@@ -220,7 +221,7 @@
     </style>
 </head>
 <!-- 修改 body 增加 py-12 内边距，保护上下边界 -->
-<body class="min-h-screen flex flex-col items-center justify-center relative select-none py-12">
+<body class="min-h-screen flex flex-col items-center justify-center relative select-none py-12" style="background-color: #A77865 !important; background: #A77865 !important; color: #FFFFFF !important;">
     
     <canvas id="particle-canvas"></canvas>
 
